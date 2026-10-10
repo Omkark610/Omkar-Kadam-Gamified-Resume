@@ -119,7 +119,7 @@ footer{text-align:center;color:#6c7099;font:8px/2 var(--px);padding:18px 10px 30
     </div>
     <div id="toast"></div>
     <div id="touch"><div class="dp"><div class="tb" id="bl_">◀</div><div class="tb" id="br_">▶</div></div><div class="tb" id="bj">JUMP</div></div>
-    <div class="ov show" id="start"><div><h2>SUPER OMKAR<br>RESUME QUEST</h2><p>Run through the career. Hit the blocks.<br>Stomp bugs from above. Side hits cost a heart.</p><button class="btn go" id="bGo">▶ Start quest</button></div></div>
+    <div class="ov show" id="start"><div><h2>SUPER OMKAR<br>RESUME QUEST</h2><p>Run through the career. Hit the blocks.<br>Stomp bugs from above. Side hits cost a heart.<br>Grab floating hearts for extra lives.</p><button class="btn go" id="bGo">▶ Start quest</button></div></div>
     <div class="ov" id="over"><div><h2>GAME OVER</h2><p>All six hearts are gone.</p><button class="btn go" id="bRetry">↺ Try again</button></div></div>
     <div class="ov" id="modal"><div id="box"><div id="mh"><div id="mi"></div><div><h2 id="mt"></h2><div id="ms"></div></div></div><div id="mb"></div><div class="mf"><button class="btn go" id="mc">Close ✕</button></div></div></div>
   </div>
@@ -189,14 +189,18 @@ D.forEach(function(s,n){s.x=x0;x0+=s.k=='banner'?300:250;
 var CXX=x0+260,LW=CXX+700;
 var S={score:0,coins:0,hearts:6,opened:0,total:0,pop:false,music:true,sound:true,paused:true,started:false,over:false,won:false,reader:false,shake:0};
 ST.forEach(function(s){if(s.k!='flag')S.total++});$('bt').textContent=S.total;
-var P,E,C,PT=[],FL=[],T=0,K={l:0,r:0,j:0,jp:0};
+var P,E,C,HP,PT=[],FL=[],T=0,K={l:0,r:0,j:0,jp:0};
+function mkHearts(){HP=[];var st=(CXX-1000)/5,o=700,i,k;
+  function bad(x){return ST.some(function(s){return s.k=='flag'&&Math.abs(s.x-x)<75})}
+  for(k=0;k<=240;k+=10){var ok=true;for(i=0;i<6;i++)if(bad(700+k+i*st))ok=false;if(ok){o=700+k;break}}
+  for(i=0;i<6;i++)HP.push({x:o+i*st,y:GT-70,on:true})}
 function reset(){
   P={x:80,y:GT,vx:0,vy:0,face:1,on:true,inv:0,stun:0,coy:0};
   E=[];for(var x=1000;x<CXX-300;x+=640+((x/7)|0)%260)E.push({x:x,a:x-90,b:x+90,dir:1,t:0,dead:false,dd:0,h:28});
 }
 function mkCoins(){C=[];for(var i=0;i<70;i++){var a=Math.sin(i*12.99)*4375.5;a-=Math.floor(a);var b=Math.sin(i*7.7+1)*999.1;b-=Math.floor(b);
   C.push({x:300+i*(LW/72)+a*80,y:GT-40-b*95,on:true})}}
-reset();mkCoins();
+reset();mkCoins();mkHearts();
 
 /* ---------- AUDIO ---------- */
 var AC,sb,mb,nt=0,mi=0;
@@ -221,6 +225,7 @@ var SF={
  close:function(){tone(784,.1,'square',.08);tone(523,.16,'square',.08,now()+.08)},
  land:function(){tone(120,.06,'triangle',.12,0,60)},
  start:function(){[392,523,659,784,1047].forEach(function(f,i){tone(f,.16,'square',.09,now()+i*.08)})},
+ life:function(){[659,784,988,1319].forEach(function(f,i){tone(f,.14,'triangle',.14,now()+i*.07)})},
  win:function(){[523,523,523,659,784,659,784,1047].forEach(function(f,i){tone(f,.2,'square',.1,now()+i*.13)})},
  over:function(){[392,370,349,330,262].forEach(function(f,i){tone(f,.3,'sawtooth',.12,now()+i*.2)})}
 };
@@ -229,7 +234,7 @@ function duck(on){if(AC)mb.gain.setTargetAtTime(S.music?(on?.15:.45):0,AC.curren
 
 /* ---------- HUD ---------- */
 function hud(){$('sc').textContent=S.score;$('co').textContent=S.coins;$('bl').textContent=S.opened;
-  var h='';for(var i=0;i<6;i++)h+='<i class="'+(i<S.hearts?'':'x')+'">♥</i>';$('hearts').innerHTML=h}
+  var h='';for(var i=0,n=Math.max(6,S.hearts);i<n;i++)h+='<i class="'+(i<S.hearts?'':'x')+'">♥</i>';$('hearts').innerHTML=h}
 function add(n,x,y){S.score+=n;FL.push({x:x,y:y,t:0,s:'+'+n});hud()}
 function burst(x,y,c,n){for(var i=0;i<n;i++){var a=Math.random()*6.28,v=60+Math.random()*180;PT.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-120,l:.6,c:c})}}
 var tt;function hideToast(){clearTimeout(tt);$('toast').classList.remove('show')}
@@ -247,7 +252,7 @@ function body(d){var h='';
 var modalOn=false;
 function showModal(i,t,s,h){modalOn=true;S.paused=true;K.l=K.r=K.j=0;$('mi').textContent=i;$('mt').textContent=t;$('ms').textContent=s||'';$('mb').innerHTML=h;$('modal').classList.add('show');$('modal').scrollTop=0;$('box').scrollTop=0;duck(true)}
 function closeModal(){if(!modalOn)return;modalOn=false;$('modal').classList.remove('show');if(S.started&&!S.over&&!S.reader)S.paused=false;sfx('close');duck(false)}
-function castleHtml(){var h='<p><b>Omkar Kadam</b> — PHP Laravel Fullstack Developer, Mumbai, India.</p><p>Open to full-time roles, consulting and freelance Laravel / fullstack work — domestic or international.</p><p><b>Score:</b> '+S.score+' | <b>Coins:</b> '+S.coins+' | <b>Blocks:</b> '+S.opened+'/'+S.total+' | <b>Hearts:</b> '+S.hearts+'/6</p><p>Find Omkar on:</p><div>';
+function castleHtml(){var h='<p><b>Omkar Kadam</b> — PHP Laravel Fullstack Developer, Mumbai, India.</p><p>Open to full-time roles, consulting and freelance Laravel / fullstack work — domestic or international.</p><p><b>Score:</b> '+S.score+' | <b>Coins:</b> '+S.coins+' | <b>Blocks:</b> '+S.opened+'/'+S.total+' | <b>Hearts:</b> '+S.hearts+'</p><p>Find Omkar on:</p><div>';
   SOC.forEach(function(s){h+='<a class="tag" style="text-decoration:none" href="'+s[1]+'" target="_blank" rel="noopener">'+s[0]+'</a>'});return h+'</div>'}
 function activate(s){
   if(s==='castle'){CS.lock=true;if(!S.won){S.won=true;add(200,CXX,GT-240)}sfx('win');burst(CXX,GT-120,'#ffd54a',40);
@@ -284,6 +289,7 @@ function upd(dt){
       if(P.vy>0&&P.y<GT-12){e.dead=true;e.dd=0;P.vy=-460;P.on=false;sfx('stomp');burst(e.x,GT-10,'#9b5de5',14);add(25,e.x,GT-40)}
       else if(P.inv<=0)hurt(e)}});
   C.forEach(function(c){if(c.on&&ov(b,{l:c.x-12,r:c.x+12,t:c.y-12,b:c.y+12})){c.on=false;S.coins++;add(10,c.x,c.y);sfx('coin');burst(c.x,c.y,'#ffd54a',6)}});
+  HP.forEach(function(h){if(h.on&&ov(b,{l:h.x-16,r:h.x+16,t:h.y-16,b:h.y+16})){h.on=false;S.hearts++;sfx('life');burst(h.x,h.y,'#ff2a44',16);FL.push({x:h.x,y:h.y-20,t:0,s:'+1 ♥'});hud();var c=$('hearts').children[S.hearts-1];if(c)c.classList.add('pop')}});
   ST.forEach(function(s){var o=ov(b,sb_(s));if(!o)s.lock=false;else if(!s.lock)activate(s)});
   var cb=sb_(CS);if(!ov(b,cb))CS.lock=false;else if(!CS.lock)activate('castle');
   PT.forEach(function(p){p.l-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=600*dt});PT=PT.filter(function(p){return p.l>0});
@@ -327,6 +333,11 @@ function pipe(s){var w=s.w,x=s.x-w/2,t=GT-s.h;
   var f=Math.sin(T*3+s.x)*4;cx.font='30px sans-serif';cx.textAlign='center';cx.fillStyle='#000';cx.fillText(s.e,s.x,t-14+f)}
 function coin(c){var sx=Math.max(.15,Math.abs(Math.cos(T*5+c.x)));cx.save();cx.translate(c.x,c.y+Math.sin(T*3+c.x)*3);cx.scale(sx,1);
   cx.fillStyle='#f0b400';cx.beginPath();cx.arc(0,0,12,0,6.3);cx.fill();cx.fillStyle='#ffe566';cx.beginPath();cx.arc(-2,-2,7,0,6.3);cx.fill();cx.strokeStyle='#a86e00';cx.lineWidth=2;cx.beginPath();cx.arc(0,0,12,0,6.3);cx.stroke();cx.restore()}
+function heart(h){var b=Math.sin(T*3+h.x)*4,s=1+.08*Math.sin(T*6);cx.save();cx.translate(h.x,h.y+b);
+  cx.fillStyle='rgba(255,70,100,'+(.2+.12*Math.sin(T*4))+')';cx.beginPath();cx.arc(0,-2,26,0,6.3);cx.fill();
+  cx.scale(s,s);cx.fillStyle='#ff2a44';cx.strokeStyle='#7a0018';cx.lineWidth=3;
+  cx.beginPath();cx.moveTo(0,13);cx.bezierCurveTo(-24,-2,-15,-21,0,-8);cx.bezierCurveTo(15,-21,24,-2,0,13);cx.closePath();cx.fill();cx.stroke();
+  cx.fillStyle='rgba(255,255,255,.65)';cx.beginPath();cx.arc(-9,-7,3.5,0,6.3);cx.fill();cx.restore()}
 function bug(e){cx.save();cx.translate(e.x,GT);
   if(e.dead){var a=1-e.dd/.5;cx.globalAlpha=a;cx.fillStyle='#7a3fd8';cx.beginPath();cx.ellipse(0,-5,18,6,0,0,6.3);cx.fill();cx.restore();return}
   var t=e.t*9;cx.fillStyle='rgba(0,0,0,.2)';cx.beginPath();cx.ellipse(0,0,16,4,0,0,6.3);cx.fill();
@@ -361,6 +372,7 @@ function draw(){
   castle();
   ST.forEach(function(s){if(Math.abs(s.x-cam-W/2)<W/2+80)s.k=='flag'?pipe(s):block(s)});
   C.forEach(function(c){if(c.on&&Math.abs(c.x-cam-W/2)<W/2+30)coin(c)});
+  HP.forEach(function(h){if(h.on&&Math.abs(h.x-cam-W/2)<W/2+40)heart(h)});
   E.forEach(function(e){if(Math.abs(e.x-cam-W/2)<W/2+40)bug(e)});
   player();
   PT.forEach(function(p){cx.globalAlpha=Math.max(0,p.l/.6);cx.fillStyle=p.c;cx.fillRect(p.x-2,p.y-2,5,5)});cx.globalAlpha=1;
@@ -397,7 +409,7 @@ function go(){if(S.started)return;ac();S.started=true;S.paused=false;$('start').
 $('bGo').addEventListener('click',go);
 $('mc').addEventListener('click',closeModal);
 $('modal').addEventListener('click',function(e){if(e.target.id=='modal')closeModal()});
-function restart(){reset();mkCoins();S.hearts=6;S.over=false;S.score=Math.max(0,S.score);$('over').classList.remove('show');duck(false);if(S.started&&!modalOn&&!S.reader)S.paused=false;hud()}
+function restart(){reset();mkCoins();mkHearts();S.hearts=6;S.over=false;S.score=Math.max(0,S.score);$('over').classList.remove('show');duck(false);if(S.started&&!modalOn&&!S.reader)S.paused=false;hud()}
 $('bRetry').addEventListener('click',function(){S.score=0;S.coins=0;restart()});
 $('bRestart').addEventListener('click',function(){closeModal();P.x=80;P.y=GT;P.vx=P.vy=0;P.inv=1;if(!S.over&&S.started)S.paused=false});
 function tog(id,key,label,on){S[key]=!S[key];$(id).textContent=label+(S[key]?'ON':'OFF');$(id).classList.toggle('off',!S[key])}
